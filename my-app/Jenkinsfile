@@ -1,32 +1,20 @@
 pipeline {
-    agent any
-
-    tools {
-        maven "3.0.5"
-        jdk "1.8.0_331"
-    }
-
-    stages {
-        stage('Initialize'){
-            steps{
-                echo "PATH = ${M2_HOME}/bin:${PATH}"
-                echo "M2_HOME = /opt/maven"
-            }
-        }
-        stage('Build') {
-            steps {
-                sh 'clean install'
-                }
-            
-            }
-        }
-     }
-    post {
-       always {
-          junit(
-        allowEmptyResults: true,
-        testResults: '*/test-reports/.xml'
-      )
+  agent any
+  tools {
+    maven 'maven-3.0.5' 
+  }
+  stages {
+    stage ('Build') {
+      steps {
+        sh 'mvn clean package'
       }
-   } 
+    }
+    stage ('Deploy') {
+      steps {
+        script {
+          deploy adapters: [tomcat9(credentialsId: 'tomcat_credential', path: '', url: 'http://dayal-test.letspractice.tk:8081')], contextPath: '/pipeline', onFailure: false, war: 'webapp/target/*.war' 
+        }
+      }
+    }
+  }
 }
